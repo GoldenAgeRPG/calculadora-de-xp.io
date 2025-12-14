@@ -3,359 +3,632 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Golden Age - Calculadora de Nível</title>
+    <title>Golden Age - Gestor de Aptidões (v3)</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --gold: #d4af37;
-            --gold-glow: rgba(212, 175, 55, 0.4);
-            --bg-dark: #0a0a0a;
-            --card-bg: rgba(20, 20, 20, 0.95);
-            --text-muted: #888;
+            --gold-hover: #f9ce48;
+            --bg-dark: #080808;
+            --card-bg: #101010;
+            --input-bg: #050505;
+            --border: rgba(255,255,255,0.08);
+            --text-main: #e0e0e0;
+            --text-muted: #666;
+            --success: #4caf50;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Inter', sans-serif;
             background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 480px;
-            background: var(--card-bg);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            padding: 40px 30px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Topo decorativo */
-        .app-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent);
-        }
-
-        /* Header */
-        .brand-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .brand-logo {
-            font-family: 'Cinzel', serif;
-            font-size: 2rem;
-            color: var(--gold);
-            letter-spacing: 2px;
-            font-weight: 700;
-            text-transform: uppercase;
-            text-shadow: 0 0 10px var(--gold-glow);
-            margin-bottom: 5px;
-        }
-
-        .brand-subtitle {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        /* Input Area */
-        .input-area {
-            margin-bottom: 30px;
-            position: relative;
-        }
-
-        .input-label {
-            display: block;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .xp-input {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            padding: 15px;
+            color: var(--text-main);
             font-family: 'Inter', sans-serif;
-            font-size: 1.5rem;
-            color: white;
-            text-align: center;
-            font-weight: bold;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-
-        .xp-input:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 15px var(--gold-glow);
-            background: rgba(0,0,0,0.3);
-        }
-
-        .xp-input::placeholder {
-            color: rgba(255,255,255,0.1);
-        }
-
-        /* Grid de Resultados */
-        .results-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.3s, border-color 0.3s;
+            min-height: 100vh;
         }
 
-        .stat-card.highlight {
-            border-color: var(--gold);
-            background: rgba(212, 175, 55, 0.05);
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-        .stat-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-family: 'Cinzel', serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #fff;
-            line-height: 1;
-        }
-
-        .stat-value.grade {
-            font-size: 1.5rem; /* Menor para caber nomes longos */
-            color: var(--gold);
-            text-align: center;
-        }
-
-        /* Barra de Progresso */
-        .progress-container {
-            background: rgba(0,0,0,0.4);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .progress-header {
+        /* --- HEADER --- */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(8, 8, 8, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--gold);
+            padding: 15px 25px;
+            margin-bottom: 40px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            transition: border-color 0.3s;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 15px; }
+
+        .brand-title {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 1.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .save-indicator {
             font-size: 0.8rem;
-            color: #aaa;
-            margin-bottom: 12px;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.5s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .save-indicator.visible { opacity: 1; }
+        .save-indicator span { color: var(--gold); }
+
+        .global-stats {
+            text-align: right;
+            border-left: 1px solid var(--border);
+            padding-left: 20px;
+        }
+        
+        .global-stats span {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .global-stats strong {
+            font-size: 1.4rem;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* --- COLUNAS --- */
+        .columns-wrapper {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 30px;
+        }
+
+        .attr-col-header {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 1.3rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .attr-badge {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #888;
+        }
+
+        /* --- CARD DA APTIDÃO --- */
+        .apt-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .apt-card:hover {
+            border-color: rgba(212, 175, 55, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Topo do Card */
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .apt-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .apt-bonus {
+            font-size: 0.85rem;
+            color: var(--gold);
+            display: block;
+        }
+
+        .apt-lvl-display {
+            text-align: right;
+            background: rgba(0,0,0,0.3);
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .lvl-label { font-size: 0.65rem; text-transform: uppercase; color: #666; display: block;}
+        .lvl-value { font-size: 1.2rem; font-weight: bold; color: #fff; font-family: 'Cinzel', serif; }
+
+        /* Área de Redução */
+        .reduction-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: -5px;
+        }
+
+        .input-reduction {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            color: var(--gold);
+            width: 45px;
+            padding: 2px 5px;
+            border-radius: 3px;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .input-reduction:focus { border-color: var(--gold); }
+
+        /* Progresso */
+        .progress-section {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
         .progress-track {
             height: 6px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
             border-radius: 3px;
             overflow: hidden;
-            margin-bottom: 12px;
-            position: relative;
+            width: 100%;
         }
 
         .progress-fill {
             height: 100%;
-            width: 0%;
             background: var(--gold);
-            box-shadow: 0 0 10px var(--gold);
-            border-radius: 3px;
-            transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        .progress-footer {
-            text-align: right;
+        .missing-xp {
             font-size: 0.75rem;
             color: var(--text-muted);
+            text-align: right;
         }
-        
-        /* Mobile adjustment */
-        @media (max-width: 400px) {
-            .results-grid {
-                grid-template-columns: 1fr;
-            }
-            .brand-logo {
-                font-size: 1.5rem;
-            }
+
+        /* Inputs */
+        .card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 15px;
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+
+        .input-wrapper { position: relative; }
+
+        .input-label {
+            position: absolute;
+            top: -6px;
+            left: 8px;
+            background: #151515;
+            padding: 0 4px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: bold;
+            border-radius: 2px;
+            z-index: 2;
+        }
+
+        .styled-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid #333;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .styled-input:focus { border-color: var(--gold); }
+
+        .add-group { display: flex; gap: 5px; }
+
+        .btn-confirm {
+            background: var(--gold);
+            border: none;
+            border-radius: 5px;
+            width: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .btn-confirm:hover { background: var(--gold-hover); transform: scale(1.05); }
+        .btn-confirm:active { transform: scale(0.95); }
+
+        /* Efeitos */
+        @keyframes flashGold {
+            0% { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }
+            100% { border-color: #333; box-shadow: none; }
+        }
+
+        .flash-effect { animation: flashGold 0.8s ease-out; }
+
+        @media (max-width: 768px) {
+            .columns-wrapper { grid-template-columns: 1fr; }
+            .sticky-header { flex-direction: column; gap: 15px; text-align: center; }
+            .global-stats { border-left: none; text-align: center; padding: 0; }
+            .header-left { flex-direction: column; }
         }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
+    <div class="main-container">
         
-        <div class="brand-header">
-            <div class="brand-logo">GOLDEN AGE</div>
-            <div class="brand-subtitle">Ferramenta de Progressão</div>
-        </div>
-
-        <div class="input-area">
-            <label class="input-label">XP Total Acumulado</label>
-            <input type="number" id="xpInput" class="xp-input" placeholder="0" oninput="calculate()" onkeyup="calculate()">
-        </div>
-
-        <div class="results-grid">
-            <div class="stat-card" id="cardLevel">
-                <span class="stat-label">Nível</span>
-                <span class="stat-value" id="dispLvl">0</span>
+        <div class="sticky-header">
+            <div class="header-left">
+                <div class="brand-title">Golden Age</div>
+                <div class="save-indicator" id="saveInd">
+                    <span>💾</span> Salvo
+                </div>
             </div>
-            <div class="stat-card" id="cardGrade">
-                <span class="stat-label">Classificação</span>
-                <span class="stat-value grade" id="dispGrade">-</span>
+            
+            <div class="global-stats">
+                <span>Investimento Total de XP</span>
+                <strong id="globalTotal">0</strong>
             </div>
         </div>
 
-        <div class="progress-container">
-            <div class="progress-header">
-                <span id="txtCurrent">0 XP</span>
-                <span id="txtNext">Próx: 200 XP</span>
+        <div class="columns-wrapper">
+            
+            <div class="col">
+                <div class="attr-col-header">
+                    <span>Força</span>
+                    <span class="attr-badge">FOR</span>
+                </div>
+                <div id="container-for"></div>
             </div>
-            <div class="progress-track">
-                <div class="progress-fill" id="progBar"></div>
-            </div>
-            <div class="progress-footer">
-                Faltam: <span id="txtMissing" style="color:white; font-weight:bold;">200</span> XP
-            </div>
-        </div>
 
+            <div class="col">
+                <div class="attr-col-header">
+                    <span>Destreza</span>
+                    <span class="attr-badge">DES</span>
+                </div>
+                <div id="container-des"></div>
+            </div>
+
+            <div class="col">
+                <div class="attr-col-header">
+                    <span>Inteligência</span>
+                    <span class="attr-badge">INT</span>
+                </div>
+                <div id="container-int"></div>
+            </div>
+
+        </div>
     </div>
 
     <script>
-        // Dados de Progressão (Tabela Exata)
-        const xpData = [
-            // G4
-            { lvl: 1, xp: 200, g: "Grau 4" }, { lvl: 2, xp: 500, g: "Grau 4" }, { lvl: 3, xp: 900, g: "Grau 4" },
-            { lvl: 4, xp: 1400, g: "Grau 4" }, { lvl: 5, xp: 2000, g: "Grau 4" }, { lvl: 6, xp: 2700, g: "Grau 4" },
-            { lvl: 7, xp: 3500, g: "Grau 4" }, { lvl: 8, xp: 4400, g: "Grau 4" }, { lvl: 9, xp: 5400, g: "Grau 4" },
-            // G3
-            { lvl: 10, xp: 6500, g: "Grau 3" }, { lvl: 11, xp: 8600, g: "Grau 3" }, { lvl: 12, xp: 10800, g: "Grau 3" },
-            { lvl: 13, xp: 13100, g: "Grau 3" }, { lvl: 14, xp: 15500, g: "Grau 3" }, { lvl: 15, xp: 18000, g: "Grau 3" },
-            { lvl: 16, xp: 20600, g: "Grau 3" }, { lvl: 17, xp: 23300, g: "Grau 3" }, { lvl: 18, xp: 26100, g: "Grau 3" },
-            { lvl: 19, xp: 29000, g: "Grau 3" },
-            // G2
-            { lvl: 20, xp: 32000, g: "Grau 2" }, { lvl: 21, xp: 36000, g: "Grau 2" }, { lvl: 22, xp: 40100, g: "Grau 2" },
-            { lvl: 23, xp: 44300, g: "Grau 2" }, { lvl: 24, xp: 48600, g: "Grau 2" }, { lvl: 25, xp: 53000, g: "Grau 2" },
-            { lvl: 26, xp: 57500, g: "Grau 2" }, { lvl: 27, xp: 62100, g: "Grau 2" }, { lvl: 28, xp: 66800, g: "Grau 2" },
-            { lvl: 29, xp: 71600, g: "Grau 2" },
-            // G1
-            { lvl: 30, xp: 76500, g: "Grau 1" }, { lvl: 31, xp: 82400, g: "Grau 1" }, { lvl: 32, xp: 88400, g: "Grau 1" },
-            { lvl: 33, xp: 94500, g: "Grau 1" }, { lvl: 34, xp: 100700, g: "Grau 1" }, { lvl: 35, xp: 107000, g: "Grau 1" },
-            { lvl: 36, xp: 113400, g: "Grau 1" }, { lvl: 37, xp: 119900, g: "Grau 1" }, { lvl: 38, xp: 126500, g: "Grau 1" },
-            { lvl: 39, xp: 133200, g: "Grau 1" },
-            // Semi
-            { lvl: 40, xp: 140000, g: "Semi-Esp." }, { lvl: 41, xp: 147800, g: "Semi-Esp." }, { lvl: 42, xp: 155700, g: "Semi-Esp." },
-            { lvl: 43, xp: 163700, g: "Semi-Esp." }, { lvl: 44, xp: 171800, g: "Semi-Esp." }, { lvl: 45, xp: 180000, g: "Semi-Esp." },
-            { lvl: 46, xp: 188300, g: "Semi-Esp." }, { lvl: 47, xp: 196700, g: "Semi-Esp." }, { lvl: 48, xp: 205200, g: "Semi-Esp." },
-            { lvl: 49, xp: 213800, g: "Semi-Esp." },
-            // Especial
-            { lvl: 50, xp: 222500, g: "Especial" }
+        // === DADOS DO SISTEMA ===
+        const xpTable = [
+            { l: 1, x: 200 }, { l: 2, x: 500 }, { l: 3, x: 900 },
+            { l: 4, x: 1400 }, { l: 5, x: 2000 }, { l: 6, x: 2700 },
+            { l: 7, x: 3500 }, { l: 8, x: 4400 }, { l: 9, x: 5400 },
+            { l: 10, x: 6500 }, { l: 11, x: 8600 }, { l: 12, x: 10800 },
+            { l: 13, x: 13100 }, { l: 14, x: 15500 }, { l: 15, x: 18000 },
+            { l: 16, x: 20600 }, { l: 17, x: 23300 }, { l: 18, x: 26100 },
+            { l: 19, x: 29000 }, { l: 20, x: 32000 }, { l: 21, x: 36000 },
+            { l: 22, x: 40100 }, { l: 23, x: 44300 }, { l: 24, x: 48600 },
+            { l: 25, x: 53000 }, { l: 26, x: 57500 }, { l: 27, x: 62100 },
+            { l: 28, x: 66800 }, { l: 29, x: 71600 }, { l: 30, x: 76500 },
+            { l: 31, x: 82400 }, { l: 32, x: 88400 }, { l: 33, x: 94500 },
+            { l: 34, x: 100700 }, { l: 35, x: 107000 }, { l: 36, x: 113400 },
+            { l: 37, x: 119900 }, { l: 38, x: 126500 }, { l: 39, x: 133200 },
+            { l: 40, x: 140000 }, { l: 41, x: 147800 }, { l: 42, x: 155700 },
+            { l: 43, x: 163700 }, { l: 44, x: 171800 }, { l: 45, x: 180000 },
+            { l: 46, x: 188300 }, { l: 47, x: 196700 }, { l: 48, x: 205200 },
+            { l: 49, x: 213800 }, { l: 50, x: 222500 }
         ];
 
-        function calculate() {
-            const val = parseInt(document.getElementById('xpInput').value) || 0;
+        const aptitudes = {
+            for: [
+                { n: "Espadas Longas", m: 30, u: "dano" },
+                { n: "Machados Longos", m: 35, u: "dano" },
+                { n: "Martelos Longos", m: 40, u: "dano" },
+                { n: "Clavas", m: 25, u: "dano" },
+                { n: "Escalada", m: 0.5, u: "m/s" },
+                { n: "Acrobacia", m: 0.5, u: "m" },
+                { n: "Combate Desarmado", m: 20, u: "dano" }
+            ],
+            des: [
+                { n: "Espadas Curtas", m: 25, u: "dano" },
+                { n: "Adagas", m: 20, u: "dano" },
+                { n: "Lâminas Duplas", m: 25, u: "dano" },
+                { n: "Machados Curtos", m: 30, u: "dano" },
+                { n: "Martelos Curtos", m: 30, u: "dano" },
+                { n: "Lanças", m: 30, u: "dano" },
+                { n: "Foices", m: 30, u: "dano" },
+                { n: "Bastões", m: 25, u: "dano" },
+                { n: "Correntes/Kusarigama", m: 25, u: "dano" },
+                { n: "Arremesso", m: 20, u: "dano" },
+                { n: "Pistolas/Revólveres", m: 40, u: "dano" },
+                { n: "Espingardas", m: 55, u: "dano" },
+                { n: "Rifles de Precisão", m: 80, u: "dano" },
+                { n: "Rifles de Assalto", m: 60, u: "dano" },
+                { n: "Submetralhadoras", m: 45, u: "dano" },
+                { n: "Metralhadoras Leves", m: 30, u: "dano" },
+                { n: "Furtividade", m: 1, u: "ocultação" },
+                { n: "Natação", m: 1, u: "m/s" },
+                { n: "Corrida", m: 2, u: "m/s" }
+            ],
+            int: [
+                { n: "Feitiços", m: 25, u: "pod/res" },
+                { n: "Barreiras", m: 25, u: "res" },
+                { n: "Percepção Mágica", m: 5, u: "m" },
+                { n: "Primeiros Socorros", m: 30, u: "HP" },
+                { n: "Percepção Visual", m: 2, u: "m" },
+                { n: "Pactos", special: "pactos" },
+                { n: "Sobrevivência", special: "recursos" },
+                { n: "Técnica Reversa", special: "rct" }
+            ]
+        };
+
+        // === INICIALIZAÇÃO ===
+        window.onload = function() {
+            renderSection('container-for', aptitudes.for);
+            renderSection('container-des', aptitudes.des);
+            renderSection('container-int', aptitudes.int);
+            loadData(); // Carrega o cache
+        };
+
+        function renderSection(containerId, list) {
+            const container = document.getElementById(containerId);
             
-            let curLvl = 0;
-            let curGrade = "Iniciado";
-            let xpBase = 0;
-            let xpTarget = 200; // Alvo inicial (Lv 1)
+            list.forEach((item, index) => {
+                const uid = item.n.replace(/[^a-zA-Z0-9]/g, '') + index;
+                
+                const card = document.createElement('div');
+                card.className = 'apt-card';
+                card.innerHTML = `
+                    <div class="card-top">
+                        <div>
+                            <div class="apt-name">${item.n}</div>
+                            <span class="apt-bonus" id="bonus-${uid}">Bônus: 0</span>
+                        </div>
+                        <div class="apt-lvl-display">
+                            <span class="lvl-label">Nível</span>
+                            <div class="lvl-value" id="lvl-${uid}">0</div>
+                        </div>
+                    </div>
+
+                    <div class="reduction-row">
+                        <label>Redução (%):</label>
+                        <input type="number" class="input-reduction save-target" id="red-${uid}" data-uid="${uid}" min="0" max="99" placeholder="0" oninput="updateCard('${uid}')">
+                    </div>
+
+                    <div class="progress-section">
+                        <div class="progress-track">
+                            <div class="progress-fill" id="bar-${uid}"></div>
+                        </div>
+                        <div class="missing-xp" id="next-${uid}">Próximo: 200 XP</div>
+                    </div>
+
+                    <div class="card-actions">
+                        <div class="input-wrapper">
+                            <label class="input-label">Acumulado</label>
+                            <input type="number" class="styled-input input-current save-target" id="cur-${uid}" data-uid="${uid}" placeholder="0" oninput="updateCard('${uid}')">
+                        </div>
+                        <div class="input-wrapper add-group">
+                            <label class="input-label">Novo XP</label>
+                            <input type="number" class="styled-input input-new" id="new-${uid}" placeholder="0" oninput="tempCalc('${uid}')" onkeydown="checkEnter(event, '${uid}')">
+                            <button class="btn-confirm" onclick="applyXP('${uid}')" title="Confirmar e Somar">✔</button>
+                        </div>
+                    </div>
+                `;
+                
+                card.dataset.meta = JSON.stringify(item);
+                container.appendChild(card);
+            });
+        }
+
+        // === STORAGE (CACHE) ===
+        function saveData() {
+            const data = {};
+            // Salvar todos os inputs marcados com 'save-target'
+            document.querySelectorAll('.save-target').forEach(input => {
+                data[input.id] = input.value;
+            });
+            localStorage.setItem('ga_aptitudes_v3', JSON.stringify(data));
             
-            // Lógica de Identificação de Nível
-            for (let i = 0; i < xpData.length; i++) {
-                if (val >= xpData[i].xp) {
-                    curLvl = xpData[i].lvl;
-                    curGrade = xpData[i].g;
-                    xpBase = xpData[i].xp;
+            // UI Feedback
+            const ind = document.getElementById('saveInd');
+            ind.classList.add('visible');
+            setTimeout(() => ind.classList.remove('visible'), 2000);
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('ga_aptitudes_v3');
+            if (saved) {
+                const data = JSON.parse(saved);
+                for (const [id, val] of Object.entries(data)) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.value = val;
+                        // Recalcular a carta associada
+                        const uid = el.dataset.uid;
+                        if(uid) updateCard(uid, false, true); // true = skipSave para não salvar durante load
+                    }
+                }
+                updateGlobalTotal();
+            }
+        }
+
+        // === LÓGICA DE UPDATE ===
+
+        function tempCalc(uid) { updateCard(uid, true); }
+
+        function applyXP(uid) {
+            const curInput = document.getElementById(`cur-${uid}`);
+            const newInput = document.getElementById(`new-${uid}`);
+            
+            const currentVal = parseInt(curInput.value) || 0;
+            const addVal = parseInt(newInput.value) || 0;
+
+            if (addVal === 0) return;
+
+            curInput.value = currentVal + addVal;
+            newInput.value = "";
+
+            curInput.classList.remove("flash-effect");
+            void curInput.offsetWidth;
+            curInput.classList.add("flash-effect");
+
+            updateCard(uid);
+        }
+
+        function checkEnter(e, uid) {
+            if (e.key === "Enter") applyXP(uid);
+        }
+
+        function updateCard(uid, isPreview = false, skipSave = false) {
+            const card = document.getElementById(`cur-${uid}`).closest('.apt-card');
+            const itemData = JSON.parse(card.dataset.meta);
+            
+            // Valores Inputs
+            const curVal = parseInt(document.getElementById(`cur-${uid}`).value) || 0;
+            const redVal = parseInt(document.getElementById(`red-${uid}`).value) || 0;
+            
+            let total = curVal;
+            if (isPreview) {
+                total += (parseInt(document.getElementById(`new-${uid}`).value) || 0);
+            }
+
+            // Fator de Redução (ex: 20% -> multiplica custo por 0.8)
+            const reductionFactor = Math.max(0.01, 1 - (redVal / 100));
+
+            // Cálculo do Nível com Redução
+            let level = 0;
+            let nextXP = Math.floor(200 * reductionFactor); 
+            let prevXP = 0;
+
+            for(let i = 0; i < xpTable.length; i++) {
+                // Ajusta o requisito da tabela com a redução
+                const reqXP = Math.floor(xpTable[i].x * reductionFactor);
+                
+                if(total >= reqXP) {
+                    level = xpTable[i].l;
+                    prevXP = reqXP;
                     
-                    if (i + 1 < xpData.length) {
-                        xpTarget = xpData[i+1].xp;
+                    if(i + 1 < xpTable.length) {
+                        nextXP = Math.floor(xpTable[i+1].x * reductionFactor);
                     } else {
-                        xpTarget = null; // Max Level
+                        nextXP = null;
                     }
                 } else {
-                    // Ainda não atingiu este nível, então este é o alvo
-                    if (curLvl === 0) xpTarget = xpData[i].xp;
+                    if(level === 0) nextXP = reqXP;
                     break;
                 }
             }
 
             // Update UI
-            document.getElementById('dispLvl').innerText = curLvl;
-            document.getElementById('dispGrade').innerText = curGrade;
-            document.getElementById('txtCurrent').innerText = val.toLocaleString('pt-BR') + " XP";
+            document.getElementById(`lvl-${uid}`).innerText = level;
 
-            // Highlight
-            const cardLvl = document.getElementById('cardLevel');
-            const cardGrade = document.getElementById('cardGrade');
-            
-            if (curLvl > 0) {
-                cardLvl.classList.add('highlight');
-                cardGrade.classList.add('highlight');
+            const nextEl = document.getElementById(`next-${uid}`);
+            const barEl = document.getElementById(`bar-${uid}`);
+
+            if (nextXP !== null) {
+                const missing = nextXP - total;
+                nextEl.innerText = `Faltam: ${missing.toLocaleString()} XP`; // Valor já considerando redução
+                
+                const range = nextXP - prevXP;
+                const gainedInLevel = total - prevXP;
+                let pct = 0;
+                if (range > 0) pct = (gainedInLevel/range)*100;
+                
+                pct = Math.min(100, Math.max(0, pct));
+                barEl.style.width = pct + "%";
             } else {
-                cardLvl.classList.remove('highlight');
-                cardGrade.classList.remove('highlight');
+                nextEl.innerText = "Nível Máximo Alcançado";
+                barEl.style.width = "100%";
             }
 
-            // Barra
-            const bar = document.getElementById('progBar');
-            const txtNext = document.getElementById('txtNext');
-            const txtMiss = document.getElementById('txtMissing');
+            // Update Bonus
+            const bonusEl = document.getElementById(`bonus-${uid}`);
+            let bonusText = "";
 
-            if (xpTarget !== null) {
-                const range = xpTarget - xpBase;
-                const progress = val - xpBase;
-                const pct = Math.min(100, Math.max(0, (progress / range) * 100));
-                
-                bar.style.width = pct + "%";
-                txtNext.innerText = `Próx: ${xpTarget.toLocaleString('pt-BR')}`;
-                txtMiss.innerText = (xpTarget - val).toLocaleString('pt-BR');
+            if (itemData.special) {
+                if (itemData.special === 'pactos') bonusText = `+${Math.floor(level/10)} Efeitos`;
+                else if (itemData.special === 'recursos') bonusText = `+${Math.floor(level/5)} Rec.`;
+                else if (itemData.special === 'rct') bonusText = `Cura ${level*50} / Dano ${level*100}`;
             } else {
-                bar.style.width = "100%";
-                txtNext.innerText = "Nível Máximo";
-                txtMiss.innerText = "0";
+                let val = level * itemData.m;
+                if(val % 1 !== 0) val = val.toFixed(1).replace('.', ',');
+                bonusText = `+${val} ${itemData.u || ''}`;
+            }
+            bonusEl.innerText = bonusText;
+
+            if(!isPreview) {
+                updateGlobalTotal();
+                if(!skipSave) saveData();
             }
         }
+
+        function updateGlobalTotal() {
+            const inputs = document.querySelectorAll('.input-current');
+            let total = 0;
+            inputs.forEach(inp => total += (parseInt(inp.value) || 0));
+            document.getElementById('globalTotal').innerText = total.toLocaleString('pt-BR');
+        }
+
     </script>
 </body>
 </html>
