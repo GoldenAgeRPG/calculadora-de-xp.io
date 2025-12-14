@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Age - Calculadora de Nível</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --gold: #d4af37;
+            --gold-glow: rgba(212, 175, 55, 0.4);
+            --bg-dark: #0a0a0a;
+            --card-bg: rgba(20, 20, 20, 0.95);
+            --text-muted: #888;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            padding: 40px 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Topo decorativo */
+        .app-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        /* Header */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .brand-logo {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            color: var(--gold);
+            letter-spacing: 2px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--gold-glow);
+            margin-bottom: 5px;
+        }
+
+        .brand-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Input Area */
+        .input-area {
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .xp-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.5rem;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .xp-input:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 15px var(--gold-glow);
+            background: rgba(0,0,0,0.3);
+        }
+
+        .xp-input::placeholder {
+            color: rgba(255,255,255,0.1);
+        }
+
+        /* Grid de Resultados */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .stat-card.highlight {
+            border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.05);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .stat-value.grade {
+            font-size: 1.5rem; /* Menor para caber nomes longos */
+            color: var(--gold);
+            text-align: center;
+        }
+
+        /* Barra de Progresso */
+        .progress-container {
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-bottom: 12px;
+        }
+
+        .progress-track {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+            border-radius: 3px;
+            transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .progress-footer {
+            text-align: right;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        /* Mobile adjustment */
+        @media (max-width: 400px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            .brand-logo {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="brand-header">
+            <div class="brand-logo">GOLDEN AGE</div>
+            <div class="brand-subtitle">Ferramenta de Progressão</div>
+        </div>
+
+        <div class="input-area">
+            <label class="input-label">XP Total Acumulado</label>
+            <input type="number" id="xpInput" class="xp-input" placeholder="0" oninput="calculate()" onkeyup="calculate()">
+        </div>
+
+        <div class="results-grid">
+            <div class="stat-card" id="cardLevel">
+                <span class="stat-label">Nível</span>
+                <span class="stat-value" id="dispLvl">0</span>
+            </div>
+            <div class="stat-card" id="cardGrade">
+                <span class="stat-label">Classificação</span>
+                <span class="stat-value grade" id="dispGrade">-</span>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-header">
+                <span id="txtCurrent">0 XP</span>
+                <span id="txtNext">Próx: 200 XP</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progBar"></div>
+            </div>
+            <div class="progress-footer">
+                Faltam: <span id="txtMissing" style="color:white; font-weight:bold;">200</span> XP
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Dados de Progressão (Tabela Exata)
+        const xpData = [
+            // G4
+            { lvl: 1, xp: 200, g: "Grau 4" }, { lvl: 2, xp: 500, g: "Grau 4" }, { lvl: 3, xp: 900, g: "Grau 4" },
+            { lvl: 4, xp: 1400, g: "Grau 4" }, { lvl: 5, xp: 2000, g: "Grau 4" }, { lvl: 6, xp: 2700, g: "Grau 4" },
+            { lvl: 7, xp: 3500, g: "Grau 4" }, { lvl: 8, xp: 4400, g: "Grau 4" }, { lvl: 9, xp: 5400, g: "Grau 4" },
+            // G3
+            { lvl: 10, xp: 6500, g: "Grau 3" }, { lvl: 11, xp: 8600, g: "Grau 3" }, { lvl: 12, xp: 10800, g: "Grau 3" },
+            { lvl: 13, xp: 13100, g: "Grau 3" }, { lvl: 14, xp: 15500, g: "Grau 3" }, { lvl: 15, xp: 18000, g: "Grau 3" },
+            { lvl: 16, xp: 20600, g: "Grau 3" }, { lvl: 17, xp: 23300, g: "Grau 3" }, { lvl: 18, xp: 26100, g: "Grau 3" },
+            { lvl: 19, xp: 29000, g: "Grau 3" },
+            // G2
+            { lvl: 20, xp: 32000, g: "Grau 2" }, { lvl: 21, xp: 36000, g: "Grau 2" }, { lvl: 22, xp: 40100, g: "Grau 2" },
+            { lvl: 23, xp: 44300, g: "Grau 2" }, { lvl: 24, xp: 48600, g: "Grau 2" }, { lvl: 25, xp: 53000, g: "Grau 2" },
+            { lvl: 26, xp: 57500, g: "Grau 2" }, { lvl: 27, xp: 62100, g: "Grau 2" }, { lvl: 28, xp: 66800, g: "Grau 2" },
+            { lvl: 29, xp: 71600, g: "Grau 2" },
+            // G1
+            { lvl: 30, xp: 76500, g: "Grau 1" }, { lvl: 31, xp: 82400, g: "Grau 1" }, { lvl: 32, xp: 88400, g: "Grau 1" },
+            { lvl: 33, xp: 94500, g: "Grau 1" }, { lvl: 34, xp: 100700, g: "Grau 1" }, { lvl: 35, xp: 107000, g: "Grau 1" },
+            { lvl: 36, xp: 113400, g: "Grau 1" }, { lvl: 37, xp: 119900, g: "Grau 1" }, { lvl: 38, xp: 126500, g: "Grau 1" },
+            { lvl: 39, xp: 133200, g: "Grau 1" },
+            // Semi
+            { lvl: 40, xp: 140000, g: "Semi-Esp." }, { lvl: 41, xp: 147800, g: "Semi-Esp." }, { lvl: 42, xp: 155700, g: "Semi-Esp." },
+            { lvl: 43, xp: 163700, g: "Semi-Esp." }, { lvl: 44, xp: 171800, g: "Semi-Esp." }, { lvl: 45, xp: 180000, g: "Semi-Esp." },
+            { lvl: 46, xp: 188300, g: "Semi-Esp." }, { lvl: 47, xp: 196700, g: "Semi-Esp." }, { lvl: 48, xp: 205200, g: "Semi-Esp." },
+            { lvl: 49, xp: 213800, g: "Semi-Esp." },
+            // Especial
+            { lvl: 50, xp: 222500, g: "Especial" }
+        ];
+
+        function calculate() {
+            const val = parseInt(document.getElementById('xpInput').value) || 0;
+            
+            let curLvl = 0;
+            let curGrade = "Iniciado";
+            let xpBase = 0;
+            let xpTarget = 200; // Alvo inicial (Lv 1)
+            
+            // Lógica de Identificação de Nível
+            for (let i = 0; i < xpData.length; i++) {
+                if (val >= xpData[i].xp) {
+                    curLvl = xpData[i].lvl;
+                    curGrade = xpData[i].g;
+                    xpBase = xpData[i].xp;
+                    
+                    if (i + 1 < xpData.length) {
+                        xpTarget = xpData[i+1].xp;
+                    } else {
+                        xpTarget = null; // Max Level
+                    }
+                } else {
+                    // Ainda não atingiu este nível, então este é o alvo
+                    if (curLvl === 0) xpTarget = xpData[i].xp;
+                    break;
+                }
+            }
+
+            // Update UI
+            document.getElementById('dispLvl').innerText = curLvl;
+            document.getElementById('dispGrade').innerText = curGrade;
+            document.getElementById('txtCurrent').innerText = val.toLocaleString('pt-BR') + " XP";
+
+            // Highlight
+            const cardLvl = document.getElementById('cardLevel');
+            const cardGrade = document.getElementById('cardGrade');
+            
+            if (curLvl > 0) {
+                cardLvl.classList.add('highlight');
+                cardGrade.classList.add('highlight');
+            } else {
+                cardLvl.classList.remove('highlight');
+                cardGrade.classList.remove('highlight');
+            }
+
+            // Barra
+            const bar = document.getElementById('progBar');
+            const txtNext = document.getElementById('txtNext');
+            const txtMiss = document.getElementById('txtMissing');
+
+            if (xpTarget !== null) {
+                const range = xpTarget - xpBase;
+                const progress = val - xpBase;
+                const pct = Math.min(100, Math.max(0, (progress / range) * 100));
+                
+                bar.style.width = pct + "%";
+                txtNext.innerText = `Próx: ${xpTarget.toLocaleString('pt-BR')}`;
+                txtMiss.innerText = (xpTarget - val).toLocaleString('pt-BR');
+            } else {
+                bar.style.width = "100%";
+                txtNext.innerText = "Nível Máximo";
+                txtMiss.innerText = "0";
+            }
+        }
+    </script>
+</body>
+</html>
