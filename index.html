@@ -498,6 +498,49 @@
         .opt-toggle.active .o-name { color: var(--gold); }
         .opt-toggle.active .o-desc { color: rgba(212, 175, 55, 0.55); }
 
+        /* FILTRO POR DIGITAÇÃO */
+        .filter-pill {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: rgba(16, 16, 16, 0.97);
+            border: 1px solid var(--gold);
+            border-radius: 20px;
+            padding: 8px 16px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.6);
+            font-size: 0.85rem;
+            max-width: calc(100% - 40px);
+        }
+        .filter-pill.visible { display: flex; }
+        .filter-pill .f-query {
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .filter-pill .f-query::after {
+            content: "";
+            display: inline-block;
+            width: 1px;
+            height: 1em;
+            background: var(--gold);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blinkCaret 1s step-end infinite;
+        }
+        .filter-pill .f-count { color: var(--text-muted); font-size: 0.75rem; white-space: nowrap; }
+        .filter-pill .f-hint { color: #444; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+
+        @keyframes blinkCaret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .apt-card.filtered-out { display: none; }
+        .col.filtered-out { display: none; }
+
         @media (max-width: 768px) {
             .columns-wrapper { grid-template-columns: 1fr; }
             .sticky-header { flex-direction: column; gap: 15px; text-align: center; }
@@ -509,6 +552,12 @@
 <body>
 
     <div class="save-indicator" id="saveInd" style="position: fixed; bottom: 20px; right: 20px; background: var(--gold); color: #000; padding: 8px 15px; border-radius: 20px; font-weight: bold; z-index: 1000; opacity: 0; transition: opacity 0.5s; pointer-events: none;">Salvo</div>
+
+    <div class="filter-pill" id="filterPill">
+        <span class="f-query" id="filterQuery"></span>
+        <span class="f-count" id="filterCount"></span>
+        <span class="f-hint">Esc limpa</span>
+    </div>
 
     <div class="modal-overlay" id="customModal">
         <div class="modal-box">
@@ -784,9 +833,85 @@
                 `;
 
                 card.dataset.meta = JSON.stringify(item);
+                card.dataset.search = normalizeName(item.n);
                 container.appendChild(card);
             });
         }
+
+        // === FILTRO POR DIGITAÇÃO ===
+        // Digitar com nada selecionado filtra as aptidões pelo nome.
+        let filterQuery = "";
+
+        function isTypingTarget(el) {
+            if (!el) return false;
+            const tag = el.tagName;
+            return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+        }
+
+        function isModalOpen() {
+            return !!document.querySelector('.modal-overlay.active');
+        }
+
+        function applyFilter() {
+            const key = normalizeName(filterQuery);
+            let matches = 0;
+
+            document.querySelectorAll('.col').forEach(col => {
+                let visibleInCol = 0;
+
+                col.querySelectorAll('.apt-card').forEach(card => {
+                    const hit = !key || (card.dataset.search || "").includes(key);
+                    card.classList.toggle('filtered-out', !hit);
+                    if (hit) visibleInCol++;
+                });
+
+                col.classList.toggle('filtered-out', !!key && visibleInCol === 0);
+                matches += visibleInCol;
+            });
+
+            const pill = document.getElementById('filterPill');
+            pill.classList.toggle('visible', !!filterQuery);
+            document.getElementById('filterQuery').textContent = filterQuery;
+            document.getElementById('filterCount').textContent =
+                matches === 1 ? "1 aptidão" : `${matches} aptidões`;
+        }
+
+        function clearFilter() {
+            filterQuery = "";
+            applyFilter();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (isModalOpen()) return;
+
+            if (e.key === "Escape") {
+                if (isTypingTarget(e.target)) { e.target.blur(); return; }
+                if (!filterQuery) return;
+                e.preventDefault();
+                clearFilter();
+                return;
+            }
+
+            if (isTypingTarget(e.target)) return;
+
+            if (e.key === "Backspace") {
+                if (!filterQuery) return;
+                e.preventDefault();
+                filterQuery = filterQuery.slice(0, -1);
+                applyFilter();
+                return;
+            }
+
+            // Apenas caracteres imprimíveis; espaço só continua um filtro já iniciado
+            // (senão roubaria o scroll da página).
+            if (e.key.length !== 1) return;
+            if (e.key === " " && !filterQuery) return;
+
+            e.preventDefault();
+            filterQuery += e.key;
+            applyFilter();
+        });
 
         // === MODIFIERS PANEL ===
         function renderModifiers() {
