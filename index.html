@@ -328,6 +328,66 @@
         .btn-modal-ok { background: var(--success); color: #000; }
         .btn-modal-cancel { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
         .btn-modal-confirm { background: var(--gold); color: #000; }
+        .btn-modal:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* IMPORT */
+        .btn-import {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-import:hover { background: var(--gold); color: #000; }
+
+        .modal-box-wide { max-width: 700px; text-align: left; }
+        .modal-box-wide .modal-title, .modal-box-wide .modal-actions { text-align: center; justify-content: center; }
+        .modal-hint { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px; line-height: 1.5; }
+
+        .import-textarea {
+            width: 100%;
+            height: 120px;
+            background: var(--input-bg);
+            border: 1px solid #333;
+            color: var(--text-main);
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            resize: vertical;
+            outline: none;
+        }
+        .import-textarea:focus { border-color: var(--gold); }
+
+        .import-preview {
+            margin: 15px 0;
+            max-height: 260px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+        }
+        .import-preview:empty { margin: 0; }
+        .import-summary { color: var(--text-muted); margin-bottom: 10px; }
+        .import-summary b { color: var(--gold); }
+        .import-warn { color: var(--danger); margin-bottom: 10px; font-size: 0.78rem; line-height: 1.5; }
+        .import-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 10px;
+            align-items: center;
+            padding: 5px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .import-row .i-name { color: #ddd; }
+        .import-row .i-lvl { color: var(--gold); font-family: 'Cinzel', serif; }
+        .import-row .i-xp { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+        .import-row.skipped .i-name { color: #555; text-decoration: line-through; }
 
         /* Efeitos */
         @keyframes flashGold {
@@ -438,6 +498,49 @@
         .opt-toggle.active .o-name { color: var(--gold); }
         .opt-toggle.active .o-desc { color: rgba(212, 175, 55, 0.55); }
 
+        /* FILTRO POR DIGITAÇÃO */
+        .filter-pill {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            background: rgba(16, 16, 16, 0.97);
+            border: 1px solid var(--gold);
+            border-radius: 20px;
+            padding: 8px 16px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.6);
+            font-size: 0.85rem;
+            max-width: calc(100% - 40px);
+        }
+        .filter-pill.visible { display: flex; }
+        .filter-pill .f-query {
+            color: #fff;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .filter-pill .f-query::after {
+            content: "";
+            display: inline-block;
+            width: 1px;
+            height: 1em;
+            background: var(--gold);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blinkCaret 1s step-end infinite;
+        }
+        .filter-pill .f-count { color: var(--text-muted); font-size: 0.75rem; white-space: nowrap; }
+        .filter-pill .f-hint { color: #444; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+
+        @keyframes blinkCaret { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        .apt-card.filtered-out { display: none; }
+        .col.filtered-out { display: none; }
+
         @media (max-width: 768px) {
             .columns-wrapper { grid-template-columns: 1fr; }
             .sticky-header { flex-direction: column; gap: 15px; text-align: center; }
@@ -450,6 +553,12 @@
 
     <div class="save-indicator" id="saveInd" style="position: fixed; bottom: 20px; right: 20px; background: var(--gold); color: #000; padding: 8px 15px; border-radius: 20px; font-weight: bold; z-index: 1000; opacity: 0; transition: opacity 0.5s; pointer-events: none;">Salvo</div>
 
+    <div class="filter-pill" id="filterPill">
+        <span class="f-query" id="filterQuery"></span>
+        <span class="f-count" id="filterCount"></span>
+        <span class="f-hint">Esc limpa</span>
+    </div>
+
     <div class="modal-overlay" id="customModal">
         <div class="modal-box">
             <h3 class="modal-title" id="modalTitle">Aviso</h3>
@@ -458,11 +567,29 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="importModal">
+        <div class="modal-box modal-box-wide">
+            <h3 class="modal-title">Importar Ficha</h3>
+            <p class="modal-hint">
+                Cole abaixo o código HTML da sua ficha (o mesmo que você usa no fórum). O XP acumulado de cada
+                aptidão será calculado a partir do nível e da barra de progresso.
+                <br><b>Importante:</b> ative os modificadores do personagem antes de importar, pois eles alteram o XP necessário por nível.
+            </p>
+            <textarea class="import-textarea" id="importInput" placeholder="&lt;div class=&quot;jjk-dossier-container&quot;&gt;..." oninput="analyzeImport()"></textarea>
+            <div class="import-preview" id="importPreview"></div>
+            <div class="modal-actions">
+                <button class="btn-modal btn-modal-cancel" onclick="closeImportModal()">Cancelar</button>
+                <button class="btn-modal btn-modal-confirm" id="btnImportApply" onclick="applyImport()" disabled>Importar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="main-container">
-        
+
         <div class="sticky-header">
             <div class="header-left">
                 <div class="brand-title">Golden Age</div>
+                <button class="btn-import" onclick="openImportModal()">Importar Ficha</button>
             </div>
 
             <div class="global-stats">
@@ -647,6 +774,7 @@
 
         // === INICIALIZAÇÃO ===
         const uidToApt = {};
+        const aptNameIndex = {};
 
         window.onload = function() {
             renderModifiers();
@@ -661,7 +789,8 @@
 
             list.forEach((item, index) => {
                 const uid = item.n.replace(/[^a-zA-Z0-9]/g, '') + index;
-                uidToApt[uid] = { id: item.id, type: item.type };
+                uidToApt[uid] = { id: item.id, type: item.type, name: item.n };
+                aptNameIndex[normalizeName(item.n)] = uid;
 
                 const card = document.createElement('div');
                 card.className = 'apt-card';
@@ -704,9 +833,85 @@
                 `;
 
                 card.dataset.meta = JSON.stringify(item);
+                card.dataset.search = normalizeName(item.n);
                 container.appendChild(card);
             });
         }
+
+        // === FILTRO POR DIGITAÇÃO ===
+        // Digitar com nada selecionado filtra as aptidões pelo nome.
+        let filterQuery = "";
+
+        function isTypingTarget(el) {
+            if (!el) return false;
+            const tag = el.tagName;
+            return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+        }
+
+        function isModalOpen() {
+            return !!document.querySelector('.modal-overlay.active');
+        }
+
+        function applyFilter() {
+            const key = normalizeName(filterQuery);
+            let matches = 0;
+
+            document.querySelectorAll('.col').forEach(col => {
+                let visibleInCol = 0;
+
+                col.querySelectorAll('.apt-card').forEach(card => {
+                    const hit = !key || (card.dataset.search || "").includes(key);
+                    card.classList.toggle('filtered-out', !hit);
+                    if (hit) visibleInCol++;
+                });
+
+                col.classList.toggle('filtered-out', !!key && visibleInCol === 0);
+                matches += visibleInCol;
+            });
+
+            const pill = document.getElementById('filterPill');
+            pill.classList.toggle('visible', !!filterQuery);
+            document.getElementById('filterQuery').textContent = filterQuery;
+            document.getElementById('filterCount').textContent =
+                matches === 1 ? "1 aptidão" : `${matches} aptidões`;
+        }
+
+        function clearFilter() {
+            filterQuery = "";
+            applyFilter();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            if (isModalOpen()) return;
+
+            if (e.key === "Escape") {
+                if (isTypingTarget(e.target)) { e.target.blur(); return; }
+                if (!filterQuery) return;
+                e.preventDefault();
+                clearFilter();
+                return;
+            }
+
+            if (isTypingTarget(e.target)) return;
+
+            if (e.key === "Backspace") {
+                if (!filterQuery) return;
+                e.preventDefault();
+                filterQuery = filterQuery.slice(0, -1);
+                applyFilter();
+                return;
+            }
+
+            // Apenas caracteres imprimíveis; espaço só continua um filtro já iniciado
+            // (senão roubaria o scroll da página).
+            if (e.key.length !== 1) return;
+            if (e.key === " " && !filterQuery) return;
+
+            e.preventDefault();
+            filterQuery += e.key;
+            applyFilter();
+        });
 
         // === MODIFIERS PANEL ===
         function renderModifiers() {
@@ -986,6 +1191,188 @@
                 updateGlobalTotal();
                 if(!skipSave) saveData();
             }
+        }
+
+        // === IMPORTAÇÃO DA FICHA ===
+
+        // Nomes que diferem entre a ficha do fórum e a calculadora
+        const FICHA_ALIASES = {
+            "arremessodearmas": "arremesso",
+            "arremessodearma": "arremesso",
+            "correntes": "correnteskusarigama",
+            "kusarigama": "correnteskusarigama",
+            "corrida": "celeridade",
+            "pistolasrevolveres": "pistolasrevolveres",
+            "desarmado": "combatedesarmado"
+        };
+
+        function normalizeName(s) {
+            return (s || "")
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase().replace(/[^a-z0-9]/g, "");
+        }
+
+        function parseFichaNumber(s) {
+            return parseInt((s || "").replace(/[^\d]/g, ""), 10) || 0;
+        }
+
+        function baseXPForLevel(level) {
+            if (level <= 0) return 0;
+            if (level <= 50) {
+                const entry = xpTable.find(x => x.l === level);
+                return entry ? entry.x : 0;
+            }
+            return 222500 + (level - 50) * 10000;
+        }
+
+        function findUidForFichaName(name) {
+            const key = normalizeName(name);
+            if (aptNameIndex[key]) return aptNameIndex[key];
+            if (FICHA_ALIASES[key] && aptNameIndex[FICHA_ALIASES[key]]) return aptNameIndex[FICHA_ALIASES[key]];
+
+            // Último recurso: correspondência única por prefixo/conteúdo
+            const hits = Object.keys(aptNameIndex).filter(k => k.startsWith(key) || key.startsWith(k));
+            if (hits.length === 1) return aptNameIndex[hits[0]];
+            return null;
+        }
+
+        function parseFicha(html) {
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const nodes = doc.querySelectorAll(".jjk-dossier-skill-item");
+            const result = [];
+
+            nodes.forEach(node => {
+                const nameEl = node.querySelector(".jjk-dossier-skill-name");
+                if (!nameEl) return;
+
+                const name = nameEl.textContent.trim();
+                const lvlTxt = (node.querySelector(".jjk-dossier-skill-level") || {}).textContent || "";
+                const xpTxt = ((node.querySelector(".jjk-dossier-skill-xp") || {}).textContent || "").trim();
+
+                const lvlMatch = lvlTxt.match(/(\d+)/);
+                const level = lvlMatch ? parseInt(lvlMatch[1], 10) : 0;
+
+                // Três formatos possíveis: "105/680", "181344/MÁXIMO" (excedente sem
+                // desbloqueio do 50+) e "MÁXIMO" puro.
+                const xpMatch = xpTxt.match(/([\d.,]+)\s*\/\s*([\d.,]+)/);
+                const maxMatch = xpTxt.match(/([\d.,]+)?\s*\/?\s*m[áa]ximo/i);
+                const isMax = !xpMatch && !!maxMatch;
+
+                result.push({
+                    name,
+                    level,
+                    progress: xpMatch ? parseFichaNumber(xpMatch[1])
+                            : (isMax && maxMatch[1] ? parseFichaNumber(maxMatch[1]) : 0),
+                    denom: xpMatch ? parseFichaNumber(xpMatch[2]) : null,
+                    isMax
+                });
+            });
+
+            return result;
+        }
+
+        let pendingImport = [];
+
+        function openImportModal() {
+            document.getElementById("importInput").value = "";
+            document.getElementById("importPreview").innerHTML = "";
+            document.getElementById("btnImportApply").disabled = true;
+            pendingImport = [];
+            document.getElementById("importModal").classList.add("active");
+            document.getElementById("importInput").focus();
+        }
+
+        function closeImportModal() {
+            document.getElementById("importModal").classList.remove("active");
+        }
+
+        function analyzeImport() {
+            const raw = document.getElementById("importInput").value;
+            const preview = document.getElementById("importPreview");
+            const btn = document.getElementById("btnImportApply");
+
+            pendingImport = [];
+
+            if (!raw.trim()) {
+                preview.innerHTML = "";
+                btn.disabled = true;
+                return;
+            }
+
+            const skills = parseFicha(raw);
+
+            if (!skills.length) {
+                preview.innerHTML = `<div class="import-warn">Nenhuma aptidão encontrada. Confira se você colou o código completo da ficha (a aba "Combate" precisa estar incluída).</div>`;
+                btn.disabled = true;
+                return;
+            }
+
+            const unmatched = [];
+            let mismatched = 0;
+
+            skills.forEach(sk => {
+                const uid = findUidForFichaName(sk.name);
+                if (!uid) { unmatched.push(sk.name); return; }
+
+                const level = sk.isMax ? 50 : sk.level;
+                const { mult } = getAptitudeMultiplier(uid);
+                // No teto, o número antes da barra é o XP excedente acumulado — ele é somado
+                // ao teto, não descartado, para não sumir quando o 50+ for desbloqueado.
+                const accumulated = Math.floor(baseXPForLevel(level) * mult) + sk.progress;
+
+                // A ficha revela o multiplicador usado nela: denominador = custo do próximo nível já ajustado
+                if (sk.denom && level < 50) {
+                    const gap = baseXPForLevel(level + 1) - baseXPForLevel(level);
+                    if (gap > 0 && Math.abs(sk.denom / gap - mult) > 0.02) mismatched++;
+                }
+
+                pendingImport.push({
+                    uid, name: uidToApt[uid].name, level, accumulated,
+                    isMax: sk.isMax,
+                    excess: sk.isMax ? sk.progress : 0
+                });
+            });
+
+            let html = `<div class="import-summary"><b>${pendingImport.length}</b> aptidões reconhecidas de ${skills.length} encontradas na ficha.</div>`;
+
+            if (mismatched > 0) {
+                html += `<div class="import-warn">Atenção: ${mismatched} aptidão(ões) usam um custo de XP diferente do configurado aqui. Feche, ajuste os "Modificadores Ativos" para bater com o personagem e importe de novo.</div>`;
+            }
+
+            if (unmatched.length) {
+                html += `<div class="import-warn">Sem correspondência na calculadora: ${unmatched.join(", ")}.</div>`;
+            }
+
+            pendingImport.forEach(row => {
+                html += `<div class="import-row">
+                    <span class="i-name">${row.name}</span>
+                    <span class="i-lvl">Nv. ${row.level}${row.isMax ? (row.excess ? ` (máx +${row.excess.toLocaleString("pt-BR")})` : " (máx)") : ""}</span>
+                    <span class="i-xp">${row.accumulated.toLocaleString("pt-BR")} XP</span>
+                </div>`;
+            });
+
+            preview.innerHTML = html;
+            btn.disabled = pendingImport.length === 0;
+        }
+
+        function applyImport() {
+            if (!pendingImport.length) return;
+
+            const count = pendingImport.length;
+
+            pendingImport.forEach(row => {
+                if (row.level > 50 && !unlockedCards.has(row.uid)) toggleCardCap(row.uid);
+
+                const input = document.getElementById(`cur-${row.uid}`);
+                if (!input) return;
+                input.value = row.accumulated;
+                updateCard(row.uid, false, true);
+            });
+
+            updateGlobalTotal();
+            saveData();
+            closeImportModal();
+            showAlert("Ficha Importada", `${count} aptidões foram atualizadas com o XP da ficha.`);
         }
 
         function updateGlobalTotal() {
