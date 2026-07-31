@@ -169,6 +169,13 @@
             display: block;
         }
 
+        .apt-note {
+            display: block;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.45);
+            margin-top: 2px;
+        }
+
         .apt-lvl-display {
             text-align: right;
             background: rgba(0,0,0,0.3);
@@ -768,8 +775,8 @@
                 { n: "Arcos Longos", m: 15, u: "dano", id: "apt-arcos-longos", type: "FOR" },
                 { n: "Resistência", m: 10, u: "red. dano físico", id: "apt-resistencia", type: "FOR" },
                 { n: "Mitridatismo", m: 10, u: "red. dano", id: "apt-mitridatismo", type: "FOR" },
-                { n: "Escalada", m: 0.5, u: "m/s", id: "apt-escalada", type: "FOR" },
-                { n: "Acrobacia", m: 0.5, u: "m", id: "apt-acrobacia", type: "FOR" },
+                { n: "Escalada", m: 0.25, u: "m/s vertical", id: "apt-escalada", type: "FOR" },
+                { n: "Acrobacia", m: 0.10, u: "m de salto", id: "apt-acrobacia", type: "FOR", note: "Bônus de Força conta 1/4 do valor." },
                 { n: "Combate Desarmado", m: 10, u: "dano", id: "apt-combate-desarmado", type: "FOR" }
             ],
             des: [
@@ -792,8 +799,9 @@
                 { n: "Submetralhadoras", m: 15, u: "dano", id: "apt-submetralhadoras", type: "DES" },
                 { n: "Metralhadoras Leves", m: 15, u: "dano", id: "apt-metralhadoras-leves", type: "DES" },
                 { n: "Furtividade", m: 1, u: "ocultação", id: "apt-furtividade", type: "DES" },
-                { n: "Natação", m: 1, u: "m/s", id: "apt-natacao", type: "DES" },
-                { n: "Celeridade", m: 2, u: "m/s", id: "apt-celeridade", type: "DES" }
+                { n: "Natação", m: 0.25, u: "m/s na água", id: "apt-natacao", type: "DES" },
+                // Progressão em platôs: 1–50 = +0,5 · 51–100 = +0,25 · 101+ = +0,10 por nível.
+                { n: "Celeridade", tiers: [{ upTo: 50, m: 0.5 }, { upTo: 100, m: 0.25 }, { upTo: 9999, m: 0.10 }], u: "m/s em solo e em golpes físicos", id: "apt-celeridade", type: "DES" }
             ],
             int: [
                 { n: "Feitiços", m: 10, u: "pod/res", id: "apt-feiticos", type: "INT" },
@@ -808,6 +816,30 @@
                 { n: "Técnica Reversa", special: "rct", id: "apt-tecnica-reversa", type: "INT" }
             ]
         };
+
+        // Bônus acumulado de uma aptidão no nível informado.
+        // Aptidões com `tiers` somam faixa a faixa (ex.: Celeridade perde força após o 50).
+        function aptitudeBonus(itemData, level) {
+            if (!itemData.tiers) return level * itemData.m;
+
+            let total = 0;
+            let done = 0;
+            for (const tier of itemData.tiers) {
+                const upTo = Math.min(level, tier.upTo);
+                if (upTo <= done) continue;
+                total += (upTo - done) * tier.m;
+                done = upTo;
+                if (done >= level) break;
+            }
+            return total;
+        }
+
+        // Até 2 casas, sem zeros à direita e com vírgula decimal.
+        function formatBonus(val) {
+            const rounded = Math.round(val * 100) / 100;
+            if (rounded % 1 === 0) return String(rounded);
+            return rounded.toFixed(2).replace(/0$/, '').replace('.', ',');
+        }
 
         // === INICIALIZAÇÃO ===
         const uidToApt = {};
@@ -836,6 +868,7 @@
                         <div>
                             <div class="apt-name">${item.n}</div>
                             <span class="apt-bonus" id="bonus-${uid}">Bônus: 0</span>
+                            ${item.note ? `<span class="apt-note">${item.note}</span>` : ''}
                         </div>
                         <div class="apt-lvl-display">
                             <span class="lvl-label">Nível</span>
@@ -1221,9 +1254,7 @@
                 else if (itemData.special === 'recursos') bonusText = `+${Math.floor(level/5)} Rec.`;
                 else if (itemData.special === 'rct') bonusText = `Cura ${level*50} / Dano ${level*10}`;
             } else {
-                let val = level * itemData.m;
-                if(val % 1 !== 0) val = val.toFixed(1).replace('.', ',');
-                bonusText = `+${val} ${itemData.u || ''}`;
+                bonusText = `+${formatBonus(aptitudeBonus(itemData, level))} ${itemData.u || ''}`;
             }
             bonusEl.innerText = bonusText;
 
